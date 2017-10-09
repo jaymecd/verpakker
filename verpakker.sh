@@ -293,6 +293,8 @@ pack_version () {
     exit 1
   fi
 
+  create_git_tag "${tag}"
+
   if [ ${#tickets[@]} -gt 0 ]; then
     create_jira_fixversion "${jira_version}" "${tickets[@]}"
   fi
@@ -300,12 +302,21 @@ pack_version () {
   create_github_release "${GIT_REPO_OWNER}" "${GIT_COMMIT}" "${tag}" "${descr}"
 }
 
+create_git_tag () {
+  local tag="${1:-}"
+
+  [ -n "${tag}" ] || fatal 4 "provide git tag"
+
+  git fetch -t -q && success "git: local tags are updated from origin" || fatal 5 "git: failed to fetch origin tags"
+  git tag "${tag}" -s -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
+  git push origin "${tag}" -q && success "git: new tag pushed to origin" || fatal 5 "git: failed to push tag to origin"
+}
+
 create_github_release () {
   local owner_repo="${1:-}"
   local commit="${2:-}"
   local tag="${3:-}"
   local body="${4:-}"
-
   local response
   local httpCode
 
@@ -313,10 +324,6 @@ create_github_release () {
   [ -n "${commit}" ] || fatal 4 "provide GitHub commit"
   [ -n "${tag}" ] || fatal 4 "provide GitHub tag"
   [ -n "${body}" ] || fatal 4 "provide GitHub body"
-
-  git fetch -t -q && success "git: local tags are updated from origin" || fail 5 "git: failed to fetch origin tags"
-  git tag "${tag}" -s -m "${tag}" && success "git: new tag created" || fail 5 "git: failed to tag the commit"
-  git push origin "${tag}" -q && success "git: new tag pushed to origin" || fail 5 "git: failed to push tag to origin"
 
   response="$(curl -sS -w ' @@@@@ %{http_code}' -m 5 \
       -H "Content-Type: application/json" -H "Accept: application/json" \
