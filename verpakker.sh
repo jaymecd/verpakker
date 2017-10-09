@@ -275,7 +275,7 @@ pack_version () {
   echo
   echo "  github: pre-release"
   if [ ${#tickets[@]} -gt 0 ]; then
-  echo "    jira: $(highlight "${tickets[@]}") => $(highlight "${jira_version}")"
+  echo "    jira: $(highlight "$(IFS=', '; echo "${tickets[*]}")") => $(highlight "${jira_version}")"
   else 
   echo "    jira: -"
   fi
