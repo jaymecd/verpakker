@@ -10,7 +10,7 @@
 
 set -o pipefail
 
-readonly VERSION="2017-10-07"
+readonly VERSION="2017-10-10"
 readonly COMMAND="${1:-next}"
 
 readonly SELF_BINARY="${BASH_SOURCE[0]}"
@@ -40,6 +40,8 @@ travis_token=$(git config --get --local verpakker.travis-token 2>/dev/null)
 jira_token=$(git config --get --local verpakker.jira-token 2>/dev/null)
 jira_domain=$(git config --get --local verpakker.jira-domain 2>/dev/null)
 jira_projects=$(git config --get --local verpakker.jira-projects 2>/dev/null)
+jira_prefix=$(git config --get --local verpakker.jira-prefix 2>/dev/null)
+jira_description=$(git config --get --local verpakker.jira-description 2>/dev/null)
 
 input_pipe () {
   test ! -t 0
@@ -115,6 +117,13 @@ check_installed () {
 	[ -n "${jira_token}" ] || fatal 3 "jira token is empty"
 	[ -n "${jira_domain}" ] || fatal 3 "jira domain is empty"
 	[ -n "${jira_projects}" ] || fatal 3 "jira projects are empty"
+
+  if [ "${VERSION//-}" -gt "${current_version//-}" ]; then
+    info 
+    info " $(highlight "[UPDATES]") New configuration $(highlight "${VERSION}") is available, current is $(highlight "${current_version}")."
+    info "           Consider to run '$(highlight "verpakker init")' to apply new configuration."
+    info 
+  fi
 }
 
 init_configuration () {
@@ -139,19 +148,27 @@ init_configuration () {
   [ -n "${JIRA_PROJECTS}" ] || read -p "JIRA_PROJECTS: [${jira_projects}] " JIRA_PROJECTS
   jira_projects="${JIRA_PROJECTS:-$jira_projects}"
   [ -n "${jira_projects}" ] || fatal 1 "missing JIRA_PROJECTS"
+
+  [ -n "${JIRA_PREFIX}" ] || read -p "JIRA_PREFIX: [${jira_prefix}] " JIRA_PREFIX
+  jira_prefix="${JIRA_PREFIX:-$jira_prefix}" # optional
+
+  [ -n "${JIRA_DESCRIPTION}" ] || read -p "JIRA_DESCRIPTION: [${jira_description}] " JIRA_DESCRIPTION
+  jira_description="${JIRA_DESCRIPTION:-$jira_description}" # optional
 }
 
 confirm_configuration () {
 	local answer
 
 	printf 'This repository metadata:\n'
-	printf '  GIT_WORK_TREE : %s\n' "${GIT_REPO}"
+	printf '     GIT_WORK_TREE : %s\n' "${GIT_REPO}"
 	printf '\nNew configuration will be saved\n'
-	printf '   GITHUB_TOKEN : %s\n' "${github_token}"
-	printf '   TRAVIS_TOKEN : %s\n' "${travis_token}"
-	printf '     JIRA_TOKEN : %s\n' "${jira_token}"
-	printf '    JIRA_DOMAIN : %s\n' "${jira_domain}"
-	printf '  JIRA_PROJECTS : %s\n' "${jira_projects}"
+	printf '      GITHUB_TOKEN : %s\n' "${github_token}"
+	printf '      TRAVIS_TOKEN : %s\n' "${travis_token}"
+	printf '        JIRA_TOKEN : %s\n' "${jira_token}"
+	printf '       JIRA_DOMAIN : %s\n' "${jira_domain}"
+	printf '     JIRA_PROJECTS : %s\n' "${jira_projects}"
+	printf '       JIRA_PREFIX : %s\n' "${jira_prefix}"
+	printf '  JIRA_DESCRIPTION : %s\n' "${jira_description}"
 	printf '\n'
 
   if ! confirm "Does this look correct? [y/N] "; then
@@ -160,14 +177,18 @@ confirm_configuration () {
 }
 
 display_configuration() {
-	printf 'This repository was configured using verpakker (%s)\n' "${current_version}"
-	printf '  GIT_WORK_TREE : %s\n' "${GIT_REPO}"
+	printf 'This repository was configured using verpakker (%s)\n' "$(highlight "${current_version}")"
+	printf '     GIT_WORK_TREE : %s\n' "${GIT_REPO}"
 	printf '\nThe current configuration:\n'
-	printf '   GITHUB_TOKEN : %s\n' "${github_token}"
-	printf '   TRAVIS_TOKEN : %s\n' "${travis_token}"
-	printf '     JIRA_TOKEN : %s\n' "${jira_token}"
-	printf '    JIRA_DOMAIN : %s\n' "${jira_domain}"
-	printf '  JIRA_PROJECTS : %s\n' "${jira_projects}"
+	printf '      GITHUB_TOKEN : %s\n' "${github_token}"
+	printf '      TRAVIS_TOKEN : %s\n' "${travis_token}"
+	printf '        JIRA_TOKEN : %s\n' "${jira_token}"
+	printf '       JIRA_DOMAIN : %s\n' "${jira_domain}"
+	printf '     JIRA_PROJECTS : %s\n' "${jira_projects}"
+	printf '       JIRA_PREFIX : %s\n' "${jira_prefix}"
+	printf '  JIRA_DESCRIPTION : %s\n' "${jira_description}"
+  printf '\nConfigured git aliases:\n'
+  printf '   - %s\n' $(git config  --name-only --get-regexp '^alias\.verpak-' | sed -e 's/^alias\.//')
 }
 
 save_configuration() {
@@ -179,6 +200,8 @@ save_configuration() {
 	git config --local verpakker.jira-token "${jira_token}"
 	git config --local verpakker.jira-domain "${jira_domain}"
 	git config --local verpakker.jira-projects "${jira_projects}"
+	git config --local verpakker.jira-prefix "${jira_prefix}"
+	git config --local verpakker.jira-description "${jira_description}"
 
 	git config --local alias.verpak-next "!${SELF_BINARY} next"
   git config --local alias.verpak-patch "!${SELF_BINARY} patch"
@@ -245,7 +268,7 @@ pack_patch_version () {
 
 pack_version () {
   local tag="${1}"
-  local jira_version="$(echo "${tag%.*}" | sed -e 's/^v//')"
+  local jira_version="${jira_prefix}$(echo "${tag%.*}" | sed -e 's/^v//')"
 
   local diff="$(git log "${GIT_LAST_TAG}...${GIT_COMMIT}" --no-merges --format="- %h : %s [%cd]" --date=short --reverse)"
 
@@ -340,7 +363,7 @@ create_github_release () {
 
   if [ ${httpCode} -ge 400 ]; then
     echo "${response}"
-    fatal 5 "github: failed to create release page for $(highlight "${tag}") tag"
+    fatal 5 "github: (${httpCode}) failed to create release page for $(highlight "${tag}") tag"
   fi
 
   local url="$(echo "${response}" | jq -r '.html_url')"
@@ -366,7 +389,7 @@ create_jira_fixversion () {
     project="${ticket/-[0-9]*/}"
 
     if [[ " ${projects[@]-} " =~ " ${project} " ]]; then
-      payload="$(jo -- -s name="${version}" project="${project}")"
+      payload="$(jo -- -s name="${version}" project="${project}" description="${jira_description}")"
 
       response="$(curl -sS -w ' @@@@@ %{http_code}' -m 5 \
           -H "Content-Type: application/json" -H "Accept: application/json" \
@@ -387,7 +410,7 @@ create_jira_fixversion () {
       fi
 
       if [ ${httpCode} -ge 400 ]; then
-        fatal 5 "jira: $(echo "${response}" | jq -r '.errors.name')"
+        fatal 5 "jira: (${httpCode}) error: $(echo "${response}" | jq -r '.errors.name')"
       fi
 
       success "jira: version $(highlight "${version}") for $(highlight "${project}") project is created"
@@ -414,7 +437,7 @@ create_jira_fixversion () {
         [ ${httpCode} -ne 401 ] || fatal 5 "jira: authentication failed"
 
         if [ ${httpCode} -ge 400 ]; then
-          fatal 5 "jira: $(echo "${response}" | jq -r '.errors.name')"
+          fatal 5 "jira: (${httpCode}) error: $(echo "${response}" | jq -r '.errors.name')"
         fi
 
         success "jira: ticket $(highlight "${ticket}") is updated with $(highlight "${version}") version"
