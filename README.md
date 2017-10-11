@@ -13,17 +13,30 @@ Currently supported `vYYWW.N.P` notation, where
 - `N` - is a weekly number increment
 - `P` - is a patch increment
 
+## Dependencies
+
+- standard system tools: `bash`, `awk`, `git`, `curl`
+- [jo](https://github.com/jpmens/jo) - to create `JSON` string
+- [jq](https://stedolan.github.io/jq/) - to parse `JSON` string
+
+On MacOS (OSX) could be installed with [Homebrew](https://brew.sh/):
+
+```
+$ brew install bash awk git curl
+$ brew install jo jq
+```
+
 ## Installation
 
 ```
-$ git clone git@github.com:jaymecd/verpacker.git ~/verpacker
+$ git clone git@github.com:jaymecd/verpakker.git ~/verpakker
 ```
 
 Initialize `verpakker`:
 
 ```
 $ cd my/project/to/deploy
-$ ~/verpacker/verpakker.sh init
+$ ~/verpakker/verpakker.sh init
 ```
 
 - `GITHUB_TOKEN` - GitHub personal access token
@@ -40,7 +53,7 @@ $ ~/verpacker/verpakker.sh init
 Observe configuration:
 
 ```
-$ ~/verpacker/verpakker.sh show
+$ ~/verpakker/verpakker.sh show
 ```
 
 ## Usage
