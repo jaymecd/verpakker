@@ -46,9 +46,12 @@ $ ~/verpakker/verpakker.sh init
     It's required to reset password, if you get HTTP 401 back while password is correct.
 
 - `JIRA_DOMAIN` - JIRA domain
-- `JIRA_PROJECTS` - JIRA tracked projects
-- `JIRA_PREFIX` - JIRA version prefix
-- `JIRA_DESCRIPTION` - JIRA version description
+- `JIRA_PROJECTS` - JIRA tracked projects, space separated list
+- `JIRA_PREFIX` - JIRA version prefix *(optional)*
+
+    If next tag is `v1741.2.3`, JIRA version would created as `${JIRA_PREFIX}1741.2`.
+
+- `JIRA_DESCRIPTION` - JIRA version description *(optional)*
 
 Observe configuration:
 
