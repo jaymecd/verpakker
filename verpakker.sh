@@ -29,7 +29,7 @@ readonly GIT_ORIGIN_URL="$(git config --get remote.origin.url 2>/dev/null)"
 readonly GIT_REPO_OWNER="$(echo "${GIT_ORIGIN_URL}" | sed -En 's_^(git@|https://)?github.com(:|/)(.*)_\3_p' | sed 's_\.git$__')"
 readonly GIT_BARE="$(git rev-parse --is-bare-repository 2>/dev/null)"
 readonly GIT_DIRTY="$(git diff-index --quiet HEAD -- 2>/dev/null && echo "false" || echo "true")"
-readonly GIT_LAST_TAG="$(git describe --abbrev=0 --tags --match="v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null)"
+readonly GIT_LAST_TAG="$(git describe --abbrev=0 --tags --match="v[0-9]*.[0-9]*.[0-9]*" HEAD 2>/dev/null)"
 readonly GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 readonly GIT_COMMIT="$(git rev-parse --verify HEAD 2>/dev/null)"
 
