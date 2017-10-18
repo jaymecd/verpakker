@@ -32,6 +32,7 @@ readonly GIT_DIRTY="$(git diff-index --quiet HEAD -- 2>/dev/null && echo "false"
 readonly GIT_LAST_TAG="$(git describe --abbrev=0 --tags --match="v[0-9]*.[0-9]*.[0-9]*" HEAD 2>/dev/null)"
 readonly GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 readonly GIT_COMMIT="$(git rev-parse --verify HEAD 2>/dev/null)"
+readonly GIT_SIGN_TAG="$(git config --get user.signingkey >/dev/null 2>&1 && echo 1 || true)"
 
 # read all configured variables
 current_version=$(git config --get --local verpakker.version 2>/dev/null)
@@ -333,7 +334,7 @@ create_git_tag () {
   [ -n "${tag}" ] || fatal 4 "provide git tag"
 
   git fetch -t -q && success "git: local tags are updated from origin" || fatal 5 "git: failed to fetch origin tags"
-  git tag "${tag}" -s -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
+  git tag "${tag}" "${GIT_SIGN_TAG:+-s}" -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
   git push origin "${tag}" -q && success "git: new tag pushed to origin" || fatal 5 "git: failed to push tag to origin"
 }
 
