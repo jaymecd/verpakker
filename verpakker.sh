@@ -265,6 +265,8 @@ pack_version () {
 
   local diff="$(git log "${GIT_LAST_TAG}...${GIT_COMMIT}" --no-merges --format="- %h : %s [%cd]" --date=short --reverse)"
 
+  [ -n "${diff}" ] || fatal 2 "git: no difference - already merged or not yet committed"
+
   local descr="$(echo "${diff}" |
           sed 's_\s*\[skip\s\+ci\]\s*_ _g' |
           sed "s_\([A-Z]\{2,\}-[0-9]\+\)_[\1](https://${jira_domain}/browse/\1)_g" |
