@@ -24,16 +24,6 @@ LAST_COLOR="${NC}"
 readonly MARK_CHECK="\xE2\x9C\x94"
 readonly MARK_CROSS="\xE2\x9C\x98"
 
-readonly GIT_REPO="$(git rev-parse --show-toplevel 2>/dev/null)"
-readonly GIT_ORIGIN_URL="$(git config --get remote.origin.url 2>/dev/null)"
-readonly GIT_REPO_OWNER="$(echo "${GIT_ORIGIN_URL}" | sed -En 's_^(git@|https://)?github.com(:|/)(.*)_\3_p' | sed 's_\.git$__')"
-readonly GIT_BARE="$(git rev-parse --is-bare-repository 2>/dev/null)"
-readonly GIT_DIRTY="$(git diff-index --quiet HEAD -- 2>/dev/null && echo "false" || echo "true")"
-readonly GIT_LAST_TAG="$(git describe --abbrev=0 --tags --match="v[0-9]*.[0-9]*.[0-9]*" HEAD 2>/dev/null)"
-readonly GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-readonly GIT_COMMIT="$(git rev-parse --verify HEAD 2>/dev/null)"
-readonly GIT_SIGN_TAG="$(git config --get user.signingkey >/dev/null 2>&1 && echo 1 || true)"
-
 # read all configured variables
 current_version=$(git config --get --local verpakker.version 2>/dev/null)
 github_token=$(git config --get --local verpakker.github-token 2>/dev/null)
@@ -107,7 +97,9 @@ run_safety_checks () {
   check_installed
 
   [[ "${GIT_BARE}" == "false" ]] || fatal 2 'this is bare repository'
-	[[ "${GIT_DIRTY}" == "false" ]] || fatal 2 'the repository is dirty; commit or stash your changes first'
+  [[ "${GIT_DIRTY}" == "false" ]] || fatal 2 'the repository is dirty; commit or stash your changes first'
+
+  validate_access_tokens
 }
 
 check_installed () {
@@ -271,8 +263,6 @@ pack_version () {
   local tag="${1}"
   local jira_version="${jira_prefix}$(echo "${tag%.*}" | sed -e 's/^v//')"
 
-  validate_access_tokens
-
   local diff="$(git log "${GIT_LAST_TAG}...${GIT_COMMIT}" --no-merges --format="- %h : %s [%cd]" --date=short --reverse)"
 
   local descr="$(echo "${diff}" |
@@ -328,12 +318,15 @@ pack_version () {
   create_github_release "${GIT_REPO_OWNER}" "${GIT_COMMIT}" "${tag}" "${descr}"
 }
 
+fetch_git_tag () {
+  git fetch -t -q && success "git: local tags are updated from origin" || fatal 5 "git: failed to fetch origin tags"
+}
+
 create_git_tag () {
   local tag="${1:-}"
 
   [ -n "${tag}" ] || fatal 4 "provide git tag"
 
-  git fetch -t -q && success "git: local tags are updated from origin" || fatal 5 "git: failed to fetch origin tags"
   git tag "${tag}" "${GIT_SIGN_TAG:+-s}" -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
   git push origin "${tag}" -q && success "git: new tag pushed to origin" || fatal 5 "git: failed to push tag to origin"
 }
@@ -497,8 +490,6 @@ create_jira_fixversion () {
   done
 }
 
-
-
 #################################################
 
 if input_pipe; then
@@ -508,6 +499,23 @@ fi
 for cmd in {awk,git,curl,jo,jq}; do
   command -v $cmd > /dev/null || fatal 1 'required command "%s" was not found' "$cmd"
 done
+
+case "${COMMAND}" in
+  next|patch)
+    info "verpakker is warming up ..."
+    fetch_git_tag
+    ;;
+esac
+
+readonly GIT_REPO="$(git rev-parse --show-toplevel 2>/dev/null)"
+readonly GIT_ORIGIN_URL="$(git config --get remote.origin.url 2>/dev/null)"
+readonly GIT_REPO_OWNER="$(echo "${GIT_ORIGIN_URL}" | sed -En 's_^(git@|https://)?github.com(:|/)(.*)_\3_p' | sed 's_\.git$__')"
+readonly GIT_BARE="$(git rev-parse --is-bare-repository 2>/dev/null)"
+readonly GIT_DIRTY="$(git diff-index --quiet HEAD -- 2>/dev/null && echo "false" || echo "true")"
+readonly GIT_LAST_TAG="$(git describe --abbrev=0 --tags --match="v[0-9]*.[0-9]*.[0-9]*" HEAD 2>/dev/null)"
+readonly GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+readonly GIT_COMMIT="$(git rev-parse --verify HEAD 2>/dev/null)"
+readonly GIT_SIGN_TAG="$(git config --get user.signingkey >/dev/null 2>&1 && echo 1 || true)"
 
 case "${COMMAND}" in
   init)
