@@ -270,6 +270,8 @@ pack_version () {
   local tag="${1}"
   local jira_version="${jira_prefix}$(echo "${tag%.*}" | sed -e 's/^v//')"
 
+  validate_access_tokens
+
   local diff="$(git log "${GIT_LAST_TAG}...${GIT_COMMIT}" --no-merges --format="- %h : %s [%cd]" --date=short --reverse)"
 
   local descr="$(echo "${diff}" |
@@ -333,6 +335,55 @@ create_git_tag () {
   git fetch -t -q && success "git: local tags are updated from origin" || fatal 5 "git: failed to fetch origin tags"
   git tag "${tag}" -s -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
   git push origin "${tag}" -q && success "git: new tag pushed to origin" || fatal 5 "git: failed to push tag to origin"
+}
+
+validate_access_tokens () {
+  validate_github_token
+  validate_jira_token
+}
+
+validate_github_token () {
+  local response
+  local httpCode
+  local auth_user
+
+  response="$(curl -sS -w ' @@@@@ %{http_code}' -m 5 \
+      -H "Accept: application/json" \
+      -H "Authorization: token ${github_token}" \
+      "https://api.github.com/user")"
+
+  [ $? -eq 0 ] || fatal 5 "github: connection failure"
+
+  httpCode=$(( ${response##* @@@@@ } ))
+  response="${response% @@@@@ *}"
+
+  [ ${httpCode} -ne 401 ] || fatal 5 "github: authentication failed"
+
+  auth_user="$(echo "${response}" | jq -r '.login')"
+
+  success "github: authenticated as $(highlight "${auth_user}")"
+}
+
+validate_jira_token () {
+  local response
+  local httpCode
+  local auth_user
+
+  response="$(curl -sS -w ' @@@@@ %{http_code}' -m 5 \
+      -H "Accept: application/json" \
+      -H "Authorization: Basic ${jira_token}" \
+      "https://${jira_domain}/rest/api/2/myself")"
+
+  [ $? -eq 0 ] || fatal 5 "jira: connection failure"
+
+  httpCode=$(( ${response##* @@@@@ } ))
+  response="${response% @@@@@ *}"
+
+  [ ${httpCode} -ne 401 ] || fatal 5 "jira: authentication failed"
+
+  auth_user="$(echo "${response}" | jq -r '.key')"
+
+  success "jira: authenticated as $(highlight "${auth_user}")"
 }
 
 create_github_release () {
