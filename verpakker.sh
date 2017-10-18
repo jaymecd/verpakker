@@ -25,14 +25,14 @@ readonly MARK_CHECK="\xE2\x9C\x94"
 readonly MARK_CROSS="\xE2\x9C\x98"
 
 # read all configured variables
-current_version=$(git config --get --local verpakker.version 2>/dev/null)
-github_token=$(git config --get --local verpakker.github-token 2>/dev/null)
-travis_token=$(git config --get --local verpakker.travis-token 2>/dev/null)
-jira_token=$(git config --get --local verpakker.jira-token 2>/dev/null)
-jira_domain=$(git config --get --local verpakker.jira-domain 2>/dev/null)
-jira_projects=$(git config --get --local verpakker.jira-projects 2>/dev/null)
-jira_prefix=$(git config --get --local verpakker.jira-prefix 2>/dev/null)
-jira_description=$(git config --get --local verpakker.jira-description 2>/dev/null)
+current_version="$(git config --get --local verpakker.version 2>/dev/null)"
+github_token="$(git config --get --local verpakker.github-token 2>/dev/null)"
+travis_token="$(git config --get --local verpakker.travis-token 2>/dev/null)"
+jira_token="$(git config --get --local verpakker.jira-token 2>/dev/null)"
+jira_domain="$(git config --get --local verpakker.jira-domain 2>/dev/null)"
+jira_projects="$(git config --get --local verpakker.jira-projects 2>/dev/null)"
+jira_prefix="$(git config --get --local verpakker.jira-prefix 2>/dev/null)"
+jira_description="$(git config --get --local verpakker.jira-description 2>/dev/null)"
 
 input_pipe () {
   test ! -t 0
