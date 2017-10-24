@@ -329,7 +329,9 @@ create_git_tag () {
 
   [ -n "${tag}" ] || fatal 4 "provide git tag"
 
-  git tag "${tag}" "${GIT_SIGN_TAG:+-s}" -m "${tag}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
+  local opts=( ${GIT_SIGN_TAG:+-s} -m "${tag}" )
+
+  git tag "${tag}" "${opts[@]}" && success "git: new tag created" || fatal 5 "git: failed to tag the commit"
   git push origin "${tag}" -q && success "git: new tag pushed to origin" || fatal 5 "git: failed to push tag to origin"
 }
 
