@@ -122,36 +122,34 @@ check_installed () {
 init_configuration () {
   [ -n "${GIT_REPO}" ] || fatal 2 "outside of git repository"
 
-  [ -n "${GITHUB_TOKEN}" ] || read -p "GITHUB_TOKEN: [${github_token}] " GITHUB_TOKEN
+  [ -n "${GITHUB_TOKEN}" ] || read -r -p "GITHUB_TOKEN: [${github_token}] " GITHUB_TOKEN
   github_token="${GITHUB_TOKEN:-$github_token}"
   [ -n "${github_token}" ] || fatal 1 "missing GITHUB_TOKEN"
 
-  [ -n "${TRAVIS_TOKEN}" ] || read -p "TRAVIS_TOKEN: [${travis_token}] " TRAVIS_TOKEN
+  [ -n "${TRAVIS_TOKEN}" ] || read -r -p "TRAVIS_TOKEN: [${travis_token}] " TRAVIS_TOKEN
   travis_token="${TRAVIS_TOKEN:-$travis_token}"
   [ -n "${travis_token}" ] || fatal 1 "missing TRAVIS_TOKEN"
 
-  [ -n "${JIRA_TOKEN}" ] || read -p "JIRA_TOKEN: [${jira_token}] " JIRA_TOKEN
+  [ -n "${JIRA_TOKEN}" ] || read -r -p "JIRA_TOKEN: [${jira_token}] " JIRA_TOKEN
   jira_token="${JIRA_TOKEN:-$jira_token}"
   [ -n "${jira_token}" ] || fatal 1 "missing JIRA_TOKEN"
 
-  [ -n "${JIRA_DOMAIN}" ] || read -p "JIRA_DOMAIN: [${jira_domain}] " JIRA_DOMAIN
+  [ -n "${JIRA_DOMAIN}" ] || read -r -p "JIRA_DOMAIN: [${jira_domain}] " JIRA_DOMAIN
   jira_domain="${JIRA_DOMAIN:-$jira_domain}"
   [ -n "${jira_domain}" ] || fatal 1 "missing JIRA_DOMAIN"
 
-  [ -n "${JIRA_PROJECTS}" ] || read -p "JIRA_PROJECTS: [${jira_projects}] " JIRA_PROJECTS
+  [ -n "${JIRA_PROJECTS}" ] || read -r -p "JIRA_PROJECTS: [${jira_projects}] " JIRA_PROJECTS
   jira_projects="${JIRA_PROJECTS:-$jira_projects}"
   [ -n "${jira_projects}" ] || fatal 1 "missing JIRA_PROJECTS"
 
-  [ -n "${JIRA_PREFIX}" ] || read -p "JIRA_PREFIX: [${jira_prefix}] " JIRA_PREFIX
+  [ -n "${JIRA_PREFIX}" ] || read -r -p "JIRA_PREFIX: [${jira_prefix}] " JIRA_PREFIX
   jira_prefix="${JIRA_PREFIX:-$jira_prefix}" # optional
 
-  [ -n "${JIRA_DESCRIPTION}" ] || read -p "JIRA_DESCRIPTION: [${jira_description}] " JIRA_DESCRIPTION
+  [ -n "${JIRA_DESCRIPTION}" ] || read -r -p "JIRA_DESCRIPTION: [${jira_description}] " JIRA_DESCRIPTION
   jira_description="${JIRA_DESCRIPTION:-$jira_description}" # optional
 }
 
 confirm_configuration () {
-	local answer
-
 	printf 'This repository metadata:\n'
 	printf '     GIT_WORK_TREE : %s\n' "${GIT_REPO}"
 	printf '\nNew configuration will be saved\n'
