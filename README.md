@@ -43,7 +43,8 @@ $ ~/verpakker/verpakker.sh init
 - `TRAVIS_TOKEN` - TravisCI token (required for pivate repositoeries)
 - `JIRA_TOKEN` - JIRA BasicAuth token (`$ echo "user:pass" | base64`)
 
-    It's required to reset password, if you get HTTP 401 back while password is correct.
+    > if you get HTTP 401 error with correct password, it's required to reset password via JIRA 'forgot password' form.
+    > More info on this weird bevaviour - [JRACLOUD-66793](https://jira.atlassian.com/browse/JRACLOUD-66793)
 
 - `JIRA_DOMAIN` - JIRA domain
 - `JIRA_PROJECTS` - JIRA tracked projects, space separated list
