@@ -50,7 +50,7 @@ $ ~/verpakker/verpakker.sh init
 - `JIRA_PROJECTS` - JIRA tracked projects, space separated list
 - `JIRA_PREFIX` - JIRA version prefix *(optional)*
 
-    If next tag is `v1741.2.3`, JIRA version would created as `${JIRA_PREFIX}1741.2`.
+    > If next tag is `v1741.2.3`, JIRA version would be created as `${JIRA_PREFIX}1741.2` and assigned to the `${JIRA_DOMAIN}` tickets in commit range.
 
 - `JIRA_DESCRIPTION` - JIRA version description *(optional)*
 
